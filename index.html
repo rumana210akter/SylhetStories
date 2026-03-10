@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SylhetStories — Climate Exhibition</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.12.7/Recharts.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#050d1a;color:#e2e8f0;font-family:'Source Sans 3',sans-serif;overflow-x:hidden}
+@keyframes fall{from{transform:translateY(-20px);opacity:0}10%{opacity:1}90%{opacity:1}to{transform:translateY(100vh);opacity:0}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+.fadeUp{animation:fadeUp 0.5s ease forwards}
+.raindrop{position:fixed;width:2px;background:linear-gradient(to bottom,transparent,rgba(148,210,255,0.5));border-radius:1px;animation:fall linear infinite;pointer-events:none;z-index:0}
+nav{position:sticky;top:0;z-index:100;background:rgba(5,13,26,0.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(56,189,248,0.15);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:60px}
+.logo{font-family:'Playfair Display',serif;font-size:20px;font-weight:900;background:linear-gradient(90deg,#38bdf8,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.navs{display:flex;gap:20px;flex-wrap:wrap}
+.nav-btn{background:none;border:none;border-bottom:2px solid transparent;color:#94a3b8;cursor:pointer;font-size:13px;font-family:'Source Sans 3',sans-serif;font-weight:600;letter-spacing:.05em;padding-bottom:4px;transition:all .2s}
+.nav-btn:hover,.nav-btn.active{color:#38bdf8;border-bottom-color:#38bdf8}
+.section{max-width:900px;margin:0 auto;padding:48px 24px;position:relative;z-index:1}
+.hero{min-height:90vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 24px;background:radial-gradient(ellipse at 50% 60%,rgba(14,165,233,0.08) 0%,transparent 70%);position:relative;z-index:1}
+h1{font-family:'Playfair Display',serif;font-size:clamp(42px,8vw,88px);font-weight:900;line-height:1.05;background:linear-gradient(135deg,#e2e8f0 30%,#38bdf8 60%,#818cf8 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:24px}
+h2{font-family:'Playfair Display',serif;font-size:38px;font-weight:900;margin-bottom:8px}
+h3{font-family:'Playfair Display',serif;font-size:20px;font-weight:700}
+.sub{font-size:17px;color:#94a3b8;max-width:540px;line-height:1.7;margin-bottom:40px}
+.card{background:rgba(15,23,42,0.8);border-radius:14px;padding:22px;transition:transform .2s,box-shadow .2s}
+.card:hover{transform:translateY(-4px);box-shadow:0 20px 40px rgba(0,0,0,0.4)}
+.grid-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
+.tag{font-size:11px;border-radius:4px;padding:2px 8px;display:inline-block;margin:2px}
+.btn{padding:12px 22px;border-radius:8px;cursor:pointer;font-family:'Source Sans 3',sans-serif;font-weight:600;font-size:14px;border:1px solid rgba(56,189,248,0.3);background:transparent;color:white;transition:all .2s}
+.btn:hover{background:rgba(56,189,248,0.1)}
+.btn-primary{background:linear-gradient(135deg,#0ea5e9,#6366f1);border:none}
+.ticker{background:rgba(15,23,42,0.85);border-radius:12px;padding:20px 26px;max-width:500px;width:100%;margin-bottom:36px;transition:all .4s}
+.timeline-line{position:absolute;left:26px;top:20px;bottom:20px;width:2px;background:linear-gradient(to bottom,#38bdf8,#ef4444);border-radius:1px}
+.tl-item{display:flex;gap:22px;margin-bottom:28px;padding-left:56px;position:relative}
+.tl-dot{position:absolute;left:16px;top:20px;width:22px;height:22px;border-radius:50%;border:3px solid #050d1a;z-index:1}
+.range{-webkit-appearance:none;width:100%;height:6px;border-radius:3px;outline:none}
+.range::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:white;cursor:pointer;box-shadow:0 0 10px rgba(56,189,248,0.5)}
+footer{border-top:1px solid rgba(255,255,255,0.05);padding:20px;text-align:center;font-size:12px;color:#334155;position:relative;z-index:1}
+.sdg-badge{background:rgba(255,255,255,0.05);border-radius:8px;padding:10px 14px;display:inline-block;margin:4px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const {useState,useEffect,useRef} = React;
+const {AreaChart,Area,BarChart,Bar,LineChart,Line,XAxis,YAxis,CartesianGrid,Tooltip,ResponsiveContainer} = Recharts;
+
+const rainfallData=[
+  {year:"2004",rainfall:3200,floods:3,affected:1.2},
+  {year:"2007",rainfall:3600,floods:4,affected:2.1},
+  {year:"2010",rainfall:3400,floods:2,affected:0.8},
+  {year:"2012",rainfall:3800,floods:3,affected:1.5},
+  {year:"2014",rainfall:3500,floods:2,affected:0.9},
+  {year:"2017",rainfall:4100,floods:5,affected:3.4},
+  {year:"2019",rainfall:3900,floods:3,affected:1.8},
+  {year:"2022",rainfall:4400,floods:6,affected:4.1},
+  {year:"2024",rainfall:5200,floods:8,affected:6.25},
+];
+
+const stories=[
+  {year:"2004",title:"The First Warning",icon:"💧",desc:"Sylhet's haors begin showing signs of unusual flooding. Farmers notice wetlands shrinking as construction accelerates along riverbeds.",stat:"1.2M affected",color:"#38bdf8"},
+  {year:"2007",title:"The Surma Swells",icon:"🌊",desc:"The Surma River overflows its banks for 4 consecutive days. Scientists note the river hasn't been dredged since 1971 — the riverbed is critically high.",stat:"2.1M affected",color:"#0ea5e9"},
+  {year:"2017",title:"The Haor Catastrophe",icon:"🌾",desc:"Flash floods destroy 80% of Boro rice crops in haors before harvest. Fishermen lose boats; farmers lose a full season's income overnight.",stat:"3.4M affected",color:"#f59e0b"},
+  {year:"2022",title:"City Goes Under",icon:"🏚️",desc:"Sylhet city itself floods for the first time in decades. Streets become rivers. Airports close. 4.1 million people displaced across the division.",stat:"4.1M affected",color:"#f97316"},
+  {year:"2024",title:"Record Broken — Again",icon:"🚨",desc:"66% of Sylhet division submerged. 2,124mm of rain in June alone — shattering the 30-year record of 1,288mm. 607,000 buildings damaged.",stat:"6.25M affected",color:"#ef4444"},
+];
+
+const causes=[
+  {icon:"🏗️",title:"River Silting",detail:"Surma River undredged since 1971. Raised riverbed means far less water-carrying capacity.",solution:"Regular dredging + riverside buffer zones",color:"#6366f1"},
+  {icon:"🌿",title:"Wetland Loss",detail:"Haors — natural flood sponges — are being filled for construction projects.",solution:"Wetland protection policy + eco-zoning",color:"#10b981"},
+  {icon:"☁️",title:"Meghalaya Rainfall",detail:"200mm in Meghalaya + 400mm in Sylhet = guaranteed flash flood within hours.",solution:"Cross-border early warning system",color:"#3b82f6"},
+  {icon:"🌡️",title:"Climate Change",detail:"Warmer temperatures intensify monsoon cycles, making every year worse than the last.",solution:"Carbon-neutral infrastructure + renewables",color:"#f59e0b"},
+];
+
+const solutions=[
+  {icon:"🌿",title:"Floating Baira Gardens",cat:"Eco-Agriculture",color:"#10b981",desc:"Traditional Sylheti floating gardens — crops grown on water hyacinth rafts that rise with floodwaters. Zero land needed, flood-proof, and completely sustainable.",tags:["Zero-waste","Flood-resilient","Traditional wisdom"]},
+  {icon:"💧",title:"Rainwater Harvesting",cat:"Water Purification",color:"#38bdf8",desc:"Low-cost rooftop collection using bamboo gutters + clay pot filtration. Each unit provides 40L/day of clean drinking water for one family.",tags:["Low-tech","Local materials","Affordable"]},
+  {icon:"🌱",title:"Riparian Buffer Zones",cat:"Ecosystem Restoration",color:"#84cc16",desc:"Replanting native trees along the Surma riverbank to reduce erosion, slow floodwater, and restore fish habitats — a natural flood barrier.",tags:["Carbon capture","Biodiversity","Flood control"]},
+  {icon:"📡",title:"IoT Flood Sensor Network",cat:"Tech Innovation",color:"#818cf8",desc:"Arduino-based water level sensors at 10 key points. SMS alerts sent to 50,000+ households 6 hours before predicted flooding.",tags:["Early warning","Open source","Community-built"]},
+  {icon:"🏘️",title:"Amphibious Housing",cat:"Resilient Infrastructure",color:"#f59e0b",desc:"Homes on buoyant foundations that float during floods and rest on ground in dry seasons — inspired by traditional haor stilt houses.",tags:["Climate adaptation","Low-cost","Local design"]},
+  {icon:"♻️",title:"Flood Debris Composting",cat:"Waste-to-Resource",color:"#f97316",desc:"Converting flood-deposited organic waste and water hyacinth into rich compost fertilizer for haor farming — closing the waste loop.",tags:["Zero-waste","Circular economy","Soil health"]},
+];
+
+function FloodMap({level}){
+  const districts=[
+    {name:"Sylhet Sadar",x:55,y:45,r:22},
+    {name:"Sunamganj",x:25,y:30,r:18},
+    {name:"Habiganj",x:60,y:72,r:16},
+    {name:"Moulvibazar",x:35,y:68,r:15},
+  ];
+  const getColor=l=>l<30?"#1e3a5f":l<60?"#1d4ed8":l<80?"#f59e0b":"#dc2626";
+  return React.createElement('svg',{viewBox:"0 0 100 100",style:{width:"100%",height:"100%",filter:"drop-shadow(0 0 20px rgba(56,189,248,0.3))"}},
+    React.createElement('defs',null,
+      React.createElement('radialGradient',{id:"glow",cx:"50%",cy:"50%",r:"50%"},
+        React.createElement('stop',{offset:"0%",stopColor:"rgba(56,189,248,0.3)"}),
+        React.createElement('stop',{offset:"100%",stopColor:"transparent"})
+      )
+    ),
+    React.createElement('rect',{width:"100",height:"100",fill:"#0a1628",rx:"4"}),
+    React.createElement('ellipse',{cx:"50",cy:"50",rx:"45",ry:"40",fill:"url(#glow)"}),
+    React.createElement('path',{d:"M20,20 Q40,40 50,50 Q60,60 75,80",stroke:"#38bdf8",strokeWidth:"1.5",fill:"none",opacity:"0.6"}),
+    React.createElement('path',{d:"M10,50 Q30,48 50,50 Q70,52 90,55",stroke:"#38bdf8",strokeWidth:"1",fill:"none",opacity:"0.4"}),
+    ...districts.map((d,i)=>React.createElement('g',{key:i},
+      React.createElement('circle',{cx:d.x,cy:d.y,r:d.r,fill:getColor(level),opacity:Math.min(1,0.7+(level/300)),style:{transition:"fill 0.5s,opacity 0.5s"}}),
+      React.createElement('circle',{cx:d.x,cy:d.y,r:d.r+2,fill:"none",stroke:"rgba(148,210,255,0.3)",strokeWidth:"0.5"}),
+      React.createElement('text',{x:d.x,y:d.y+1,textAnchor:"middle",fontSize:"3.5",fill:"white",fontWeight:"bold"},d.name.split(" ")[0]),
+      level>70?React.createElement('text',{x:d.x,y:d.y+6,textAnchor:"middle",fontSize:"4"},"⚠️"):null
+    )),
+    level>40?React.createElement('ellipse',{cx:"50",cy:"50",rx:20+level/4,ry:15+level/6,fill:"rgba(56,189,248,0.1)",style:{transition:"all 0.5s"}}):null,
+    React.createElement('text',{x:"50",y:"95",textAnchor:"middle",fontSize:"4",fill:"rgba(148,210,255,0.7)"},"Sylhet Division")
+  );
+}
+
+function App(){
+  const [page,setPage]=useState("home");
+  const [storyIdx,setStoryIdx]=useState(0);
+  const [rainfall,setRainfall]=useState(50);
+  const [meghalaya,setMeghalaya]=useState(50);
+  const [drops,setDrops]=useState([]);
+
+  const floodLevel=rainfall+meghalaya*2;
+  const mapLevel=Math.min(100,floodLevel/10);
+  const alert=floodLevel>800?{label:"🚨 DANGER",color:"#dc2626",bg:"rgba(220,38,38,0.12)"}
+    :floodLevel>500?{label:"⚠️ WARNING",color:"#f97316",bg:"rgba(249,115,22,0.12)"}
+    :floodLevel>300?{label:"👁 WATCH",color:"#f59e0b",bg:"rgba(245,158,11,0.12)"}
+    :{label:"✅ SAFE",color:"#10b981",bg:"rgba(16,185,129,0.12)"};
+
+  useEffect(()=>{
+    setDrops(Array.from({length:35},(_,i)=>({id:i,left:`${Math.random()*100}%`,height:`${10+Math.random()*20}px`,dur:`${0.5+Math.random()}s`,delay:`${Math.random()*2}s`,op:0.15+Math.random()*0.35})));
+  },[]);
+
+  useEffect(()=>{
+    const t=setInterval(()=>setStoryIdx(s=>(s+1)%stories.length),4000);
+    return ()=>clearInterval(t);
+  },[]);
+
+  const navItems=[["home","Home"],["stories","Stories"],["data","Data"],["warning","Early Warning"],["solutions","Solutions"]];
+  const s=stories[storyIdx];
+
+  const chartStyle={background:"rgba(15,23,42,0.8)",border:"1px solid rgba(56,189,248,0.12)",borderRadius:"14px",padding:"24px",marginBottom:"20px"};
+  const tooltipStyle={contentStyle:{background:"#0f172a",border:"1px solid rgba(56,189,248,0.3)",borderRadius:"8px",fontFamily:"Source Sans 3"}};
+
+  return React.createElement('div',null,
+    // Rain
+    drops.map(d=>React.createElement('div',{key:d.id,className:"raindrop",style:{left:d.left,height:d.height,animationDuration:d.dur,animationDelay:d.delay,opacity:d.op,top:"-20px"}})),
+
+    // Nav
+    React.createElement('nav',null,
+      React.createElement('div',{className:"logo"},"SylhetStories"),
+      React.createElement('div',{className:"navs"},
+        navItems.map(([id,label])=>React.createElement('button',{key:id,className:`nav-btn ${page===id?"active":""}`,onClick:()=>setPage(id)},label))
+      )
+    ),
+
+    // HOME
+    page==="home"&&React.createElement('div',{className:"fadeUp"},
+      React.createElement('div',{className:"hero"},
+        React.createElement('div',{style:{fontSize:"12px",letterSpacing:"0.2em",color:"#38bdf8",marginBottom:"18px",textTransform:"uppercase"}},"🌧 Climate × Sustainability Exhibition — Sylhet, Bangladesh"),
+        React.createElement('h1',null,"When the Sky",React.createElement('br'),"Drowns a City"),
+        React.createElement('p',{className:"sub"},"A data-driven story of Sylhet's climate crisis — from rising floodwaters to community-led eco solutions."),
+        React.createElement('div',{className:"ticker",style:{borderLeft:`4px solid ${s.color}`,borderColor:s.color}},
+          React.createElement('div',{style:{display:"flex",alignItems:"center",gap:"10px",marginBottom:"8px"}},
+            React.createElement('span',{style:{fontSize:"26px"}},s.icon),
+            React.createElement('span',{style:{fontFamily:"'Playfair Display',serif",fontSize:"17px",fontWeight:700,color:s.color}},`${s.year} — ${s.title}`)
+          ),
+          React.createElement('p',{style:{fontSize:"13px",color:"#94a3b8",lineHeight:1.6}},s.desc),
+          React.createElement('div',{style:{marginTop:"8px",fontSize:"13px",fontWeight:700,color:s.color}},s.stat)
+        ),
+        React.createElement('div',{style:{display:"flex",gap:"8px",marginBottom:"32px"}},
+          stories.map((_,i)=>React.createElement('div',{key:i,onClick:()=>setStoryIdx(i),style:{width:i===storyIdx?"22px":"8px",height:"8px",borderRadius:"4px",background:i===storyIdx?"#38bdf8":"#1e3a5f",cursor:"pointer",transition:"all .3s"}}))
+        ),
+        React.createElement('div',{style:{display:"flex",gap:"12px",flexWrap:"wrap",justifyContent:"center"}},
+          React.createElement('button',{className:"btn btn-primary",onClick:()=>setPage("stories")},"📖 Read Stories"),
+          React.createElement('button',{className:"btn",onClick:()=>setPage("warning")},"⚡ Flood Simulator"),
+          React.createElement('button',{className:"btn",onClick:()=>setPage("solutions")},"💡 Solutions")
+        )
+      ),
+      React.createElement('div',{className:"section grid-4",style:{paddingTop:"0"}},
+        [{n:"66%",label:"of Sylhet flooded in 2024",icon:"🌊",c:"#38bdf8"},{n:"6.25M",label:"people affected (2024)",icon:"👥",c:"#f59e0b"},{n:"2124mm",label:"rain in June 2024 alone",icon:"🌧",c:"#818cf8"},{n:"53yrs",label:"since last river dredging",icon:"⏳",c:"#ef4444"}]
+        .map((s,i)=>React.createElement('div',{key:i,className:"card",style:{border:`1px solid ${s.c}20`,borderTop:`3px solid ${s.c}`,textAlign:"center"}},
+          React.createElement('div',{style:{fontSize:"26px",marginBottom:"8px"}},s.icon),
+          React.createElement('div',{style:{fontFamily:"'Playfair Display',serif",fontSize:"28px",fontWeight:900,color:s.c}},s.n),
+          React.createElement('div',{style:{fontSize:"12px",color:"#64748b",marginTop:"4px"}},s.label)
+        ))
+      )
+    ),
+
+    // STORIES
+    page==="stories"&&React.createElement('div',{className:"section fadeUp"},
+      React.createElement('h2',null,"Sylhet's ",React.createElement('span',{style:{color:"#38bdf8"}},"Climate Timeline")),
+      React.createElement('p',{style:{color:"#64748b",marginBottom:"36px"}},"Two decades of rising waters — told through data and community stories."),
+      React.createElement('div',{style:{position:"relative"}},
+        React.createElement('div',{className:"timeline-line"}),
+        stories.map((s,i)=>React.createElement('div',{key:i,className:"tl-item"},
+          React.createElement('div',{className:"tl-dot",style:{background:s.color}}),
+          React.createElement('div',{style:{flex:1,background:"rgba(15,23,42,0.8)",border:`1px solid ${s.color}25`,borderLeft:`4px solid ${s.color}`,borderRadius:"12px",padding:"22px"}},
+            React.createElement('div',{style:{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:"8px",marginBottom:"10px"}},
+              React.createElement('div',null,
+                React.createElement('div',{style:{fontSize:"11px",color:s.color,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase"}},s.year),
+                React.createElement('h3',{style:{marginTop:"4px"}},`${s.icon} ${s.title}`)
+              ),
+              React.createElement('div',{style:{background:`${s.color}20`,border:`1px solid ${s.color}40`,borderRadius:"8px",padding:"5px 12px",fontSize:"13px",fontWeight:700,color:s.color}},s.stat)
+            ),
+            React.createElement('p',{style:{fontSize:"14px",color:"#94a3b8",lineHeight:1.7}},s.desc)
+          )
+        ))
+      ),
+      React.createElement('h3',{style:{fontFamily:"'Playfair Display',serif",fontSize:"26px",marginTop:"44px",marginBottom:"20px"}},"Why Does ",React.createElement('span',{style:{color:"#f59e0b"}},"Sylhet Flood?")),
+      React.createElement('div',{className:"grid-2"},
+        causes.map((c,i)=>React.createElement('div',{key:i,className:"card",style:{border:`1px solid ${c.color}20`,borderTop:`3px solid ${c.color}`}},
+          React.createElement('div',{style:{fontSize:"30px",marginBottom:"10px"}},c.icon),
+          React.createElement('h3',{style:{color:c.color,marginBottom:"8px"}},c.title),
+          React.createElement('p',{style:{fontSize:"13px",color:"#64748b",lineHeight:1.6,marginBottom:"10px"}},c.detail),
+          React.createElement('div',{style:{fontSize:"12px",color:"#10b981",background:"rgba(16,185,129,0.1)",borderRadius:"6px",padding:"6px 10px"}},"✅ "+c.solution)
+        ))
+      )
+    ),
+
+    // DATA
+    page==="data"&&React.createElement('div',{className:"section fadeUp"},
+      React.createElement('h2',null,"Sylhet ",React.createElement('span',{style:{color:"#38bdf8"}},"Climate Data")),
+      React.createElement('p',{style:{color:"#64748b",marginBottom:"36px"}},"20 years of rainfall, flood frequency, and displacement — visualized."),
+      React.createElement('div',{style:chartStyle},
+        React.createElement('h3',{style:{color:"#38bdf8",marginBottom:"16px"}},"📈 Annual Rainfall (mm)"),
+        React.createElement(ResponsiveContainer,{width:"100%",height:200},
+          React.createElement(AreaChart,{data:rainfallData},
+            React.createElement('defs',null,React.createElement('linearGradient',{id:"rg",x1:"0",y1:"0",x2:"0",y2:"1"},React.createElement('stop',{offset:"5%",stopColor:"#38bdf8",stopOpacity:0.3}),React.createElement('stop',{offset:"95%",stopColor:"#38bdf8",stopOpacity:0}))),
+            React.createElement(CartesianGrid,{strokeDasharray:"3 3",stroke:"rgba(255,255,255,0.05)"}),
+            React.createElement(XAxis,{dataKey:"year",stroke:"#475569",tick:{fontSize:12}}),
+            React.createElement(YAxis,{stroke:"#475569",tick:{fontSize:12}}),
+            React.createElement(Tooltip,tooltipStyle),
+            React.createElement(Area,{type:"monotone",dataKey:"rainfall",stroke:"#38bdf8",strokeWidth:2,fill:"url(#rg)"})
+          )
+        )
+      ),
+      React.createElement('div',{className:"grid-2"},
+        React.createElement('div',{style:{...chartStyle,marginBottom:0}},
+          React.createElement('h3',{style:{color:"#f97316",marginBottom:"14px"}},"🌊 Flood Events / Year"),
+          React.createElement(ResponsiveContainer,{width:"100%",height:180},
+            React.createElement(BarChart,{data:rainfallData},
+              React.createElement(CartesianGrid,{strokeDasharray:"3 3",stroke:"rgba(255,255,255,0.05)"}),
+              React.createElement(XAxis,{dataKey:"year",stroke:"#475569",tick:{fontSize:10}}),
+              React.createElement(YAxis,{stroke:"#475569",tick:{fontSize:10}}),
+              React.createElement(Tooltip,tooltipStyle),
+              React.createElement(Bar,{dataKey:"floods",fill:"#f97316",radius:[4,4,0,0]})
+            )
+          )
+        ),
+        React.createElement('div',{style:{...chartStyle,marginBottom:0}},
+          React.createElement('h3',{style:{color:"#ef4444",marginBottom:"14px"}},"👥 Millions Affected"),
+          React.createElement(ResponsiveContainer,{width:"100%",height:180},
+            React.createElement(LineChart,{data:rainfallData},
+              React.createElement(CartesianGrid,{strokeDasharray:"3 3",stroke:"rgba(255,255,255,0.05)"}),
+              React.createElement(XAxis,{dataKey:"year",stroke:"#475569",tick:{fontSize:10}}),
+              React.createElement(YAxis,{stroke:"#475569",tick:{fontSize:10}}),
+              React.createElement(Tooltip,tooltipStyle),
+              React.createElement(Line,{type:"monotone",dataKey:"affected",stroke:"#ef4444",strokeWidth:2,dot:{fill:"#ef4444",r:4}})
+            )
+          )
+        )
+      ),
+      React.createElement('div',{style:{marginTop:"20px",background:"rgba(56,189,248,0.05)",border:"1px solid rgba(56,189,248,0.15)",borderRadius:"12px",padding:"14px 18px",fontSize:"14px",color:"#64748b",lineHeight:1.6}},
+        "📌 ",React.createElement('strong',{style:{color:"#38bdf8"}},"Key Insight:")," Between 2004 and 2024, annual rainfall increased ",React.createElement('strong',{style:{color:"white"}},"62%"),", flood events tripled, and people affected grew ",React.createElement('strong',{style:{color:"#ef4444"}},"5× (1.2M → 6.25M).")
+      )
+    ),
+
+    // WARNING SIMULATOR
+    page==="warning"&&React.createElement('div',{className:"section fadeUp"},
+      React.createElement('h2',null,"Flood ",React.createElement('span',{style:{color:"#38bdf8"}},"Early Warning")," Simulator"),
+      React.createElement('p',{style:{color:"#64748b",marginBottom:"36px"}},"Drag the sliders to simulate rainfall and see Sylhet's flood risk change live."),
+      React.createElement('div',{className:"grid-2"},
+        React.createElement('div',null,
+          React.createElement('div',{style:{...chartStyle}},
+            React.createElement('h3',{style:{color:"#38bdf8",marginBottom:"22px"}},"⚙️ Input Parameters"),
+            React.createElement('div',{style:{marginBottom:"24px"}},
+              React.createElement('div',{style:{display:"flex",justifyContent:"space-between",marginBottom:"8px"}},
+                React.createElement('label',{style:{fontSize:"14px",color:"#94a3b8"}},"🌧 Sylhet Rainfall (mm)"),
+                React.createElement('span',{style:{fontFamily:"'Playfair Display',serif",fontSize:"18px",fontWeight:700,color:"#38bdf8"}},rainfall+"mm")
+              ),
+              React.createElement('input',{type:"range",min:0,max:700,value:rainfall,className:"range",style:{background:`linear-gradient(to right,#0ea5e9 0%,#0ea5e9 ${(rainfall/700)*100}%,#1e3a5f ${(rainfall/700)*100}%,#1e3a5f 100%)`},onChange:e=>setRainfall(+e.target.value)})
+            ),
+            React.createElement('div',null,
+              React.createElement('div',{style:{display:"flex",justifyContent:"space-between",marginBottom:"8px"}},
+                React.createElement('label',{style:{fontSize:"14px",color:"#94a3b8"}},"☁️ Meghalaya Rainfall (mm)"),
+                React.createElement('span',{style:{fontFamily:"'Playfair Display',serif",fontSize:"18px",fontWeight:700,color:"#14b8a6"}},meghalaya+"mm")
+              ),
+              React.createElement('input',{type:"range",min:0,max:300,value:meghalaya,className:"range",style:{background:`linear-gradient(to right,#14b8a6 0%,#14b8a6 ${(meghalaya/300)*100}%,#1e3a5f ${(meghalaya/300)*100}%,#1e3a5f 100%)`},onChange:e=>setMeghalaya(+e.target.value)})
+            )
+          ),
+          React.createElement('div',{style:{background:alert.bg,border:`1px solid ${alert.color}40`,borderLeft:`5px solid ${alert.color}`,borderRadius:"12px",padding:"20px",marginBottom:"14px"}},
+            React.createElement('div',{style:{fontFamily:"'Playfair Display',serif",fontSize:"26px",fontWeight:900,color:alert.color}},alert.label),
+            React.createElement('div',{style:{fontSize:"13px",color:"#94a3b8",marginTop:"6px"}},"Flood index: ",React.createElement('strong',{style:{color:"white"}},Math.min(floodLevel,999).toFixed(0))),
+            React.createElement('div',{style:{marginTop:"10px",background:"rgba(0,0,0,0.3)",borderRadius:"6px",height:"8px",overflow:"hidden"}},
+              React.createElement('div',{style:{height:"100%",borderRadius:"6px",width:`${Math.min(100,(floodLevel/1000)*100)}%`,background:`linear-gradient(90deg,#10b981,${alert.color})`,transition:"width .3s,background .3s"}})
+            )
+          ),
+          React.createElement('div',{style:{background:"rgba(15,23,42,0.7)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:"10px",padding:"14px",fontSize:"13px",color:"#64748b",lineHeight:1.7}},
+            floodLevel>800?"🚨 Evacuate low-lying areas. Emergency response needed. Rivers at critical levels."
+            :floodLevel>500?"⚠️ Flood barriers deployed. Avoid riverside areas. Monitor Surma River hourly."
+            :floodLevel>300?"👁 Alert issued. Haor communities prepare. Monitor Meghalaya upstream data."
+            :"✅ Normal conditions. Continue monitoring. No immediate action required."
+          )
+        ),
+        React.createElement('div',{style:{background:"rgba(15,23,42,0.8)",border:"1px solid rgba(56,189,248,0.15)",borderRadius:"14px",padding:"20px"}},
+          React.createElement('h3',{style:{color:"#38bdf8",marginBottom:"14px"}},"🗺️ Live Risk Map"),
+          React.createElement('div',{style:{height:"280px"}},React.createElement(FloodMap,{level:mapLevel})),
+          React.createElement('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"6px",marginTop:"12px"}},
+            [["#1d4ed8","Safe (<30%)"],["#f59e0b","Watch (30-60%)"],["#f97316","Warning (60-80%)"],["#dc2626","Danger (>80%)"]].map(([c,l])=>
+              React.createElement('div',{key:l,style:{display:"flex",alignItems:"center",gap:"6px",fontSize:"11px",color:"#64748b"}},
+                React.createElement('div',{style:{width:"10px",height:"10px",borderRadius:"2px",background:c,flexShrink:0}}),l
+              )
+            )
+          )
+        )
+      )
+    ),
+
+    // SOLUTIONS
+    page==="solutions"&&React.createElement('div',{className:"section fadeUp"},
+      React.createElement('h2',null,"Sustainable ",React.createElement('span',{style:{color:"#10b981"}},"Solutions")),
+      React.createElement('p',{style:{color:"#64748b",marginBottom:"36px"}},"Practical, eco-friendly innovations that can protect Sylhet's people and environment."),
+      React.createElement('div',{className:"grid-3"},
+        solutions.map((s,i)=>React.createElement('div',{key:i,className:"card",style:{border:`1px solid ${s.color}20`,borderTop:`3px solid ${s.color}`}},
+          React.createElement('div',{style:{fontSize:"32px",marginBottom:"10px"}},s.icon),
+          React.createElement('div',{style:{fontSize:"11px",color:s.color,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:"4px"}},s.cat),
+          React.createElement('h3',{style:{fontSize:"17px",marginBottom:"8px"}},s.title),
+          React.createElement('p',{style:{fontSize:"13px",color:"#64748b",lineHeight:1.7,marginBottom:"12px"}},s.desc),
+          React.createElement('div',null,s.tags.map(t=>React.createElement('span',{key:t,className:"tag",style:{background:`${s.color}15`,color:s.color,border:`1px solid ${s.color}30`}},t)))
+        ))
+      ),
+      React.createElement('div',{style:{marginTop:"36px",background:"rgba(15,23,42,0.8)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:"14px",padding:"26px"}},
+        React.createElement('h3',{style:{fontFamily:"'Playfair Display',serif",fontSize:"22px",marginBottom:"14px"}},"🌐 UN SDG Alignment"),
+        React.createElement('div',{style:{display:"flex",flexWrap:"wrap",gap:"8px"}},
+          [["SDG 2","Zero Hunger","#f59e0b"],["SDG 6","Clean Water","#38bdf8"],["SDG 11","Sustainable Cities","#6366f1"],["SDG 13","Climate Action","#10b981"],["SDG 15","Life on Land","#84cc16"]]
+          .map(([code,label,color])=>React.createElement('div',{key:code,className:"sdg-badge",style:{border:`1px solid ${color}30`}},
+            React.createElement('div',{style:{fontSize:"11px",color:color,fontWeight:700}},code),
+            React.createElement('div',{style:{fontSize:"13px",color:"#94a3b8"}},label)
+          ))
+        )
+      )
+    ),
+
+    React.createElement('footer',null,"SylhetStories — Sustainable Project Exhibition | Data: NASA, BMD, UNICEF Bangladesh")
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+</script>
+</body>
+</html>
